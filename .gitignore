@@ -1,0 +1,8 @@
+# Editor / OS junk
+.DS_Store
+*.swp
+*~
+
+# Local backups made by install.sh
+*.bak
+*.bak.*
