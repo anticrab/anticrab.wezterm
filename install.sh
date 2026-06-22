@@ -72,6 +72,23 @@ else
     fi
 fi
 
+# Install the `wezterm` terminfo into ~/.terminfo so `config.term = "wezterm"`
+# works and apps inside (tmux, nvim) get styled underlines (undercurl) + true
+# colour. Bundled in the repo so this needs no network. Non-fatal if `tic` is
+# missing — wezterm will just fall back to xterm-256color.
+if command -v tic >/dev/null; then
+    if ! infocmp -x wezterm >/dev/null 2>&1; then
+        if tic -x -o "$HOME/.terminfo" "$REPO_DIR/wezterm.terminfo" 2>/dev/null; then
+            echo "Installed terminfo: wezterm -> ~/.terminfo"
+        else
+            echo "Warning: failed to install wezterm terminfo (undercurl may not work)" >&2
+        fi
+    fi
+else
+    echo "Hint: 'tic' not found — install ncurses-bin to get the wezterm terminfo"
+    echo "      (needed for undercurl / true colour inside tmux+nvim)."
+fi
+
 # WezTerm presence hint (non-fatal).
 if ! command -v wezterm >/dev/null; then
     echo "Hint: WezTerm not found on PATH — install it from"
