@@ -48,7 +48,9 @@ if has_gpaste_schema; then
     gsettings set org.gnome.GPaste save-history true
     gsettings set org.gnome.GPaste images-support true
     # Super+V opens the searchable history (GNOME Shell menu, type to filter).
-    gsettings set org.gnome.GPaste show-history "['<Super>v']"
+    # show-history is a single-string accelerator (type 's'), NOT an array —
+    # passing "['<Super>v']" stores a literal invalid accel that won't bind.
+    gsettings set org.gnome.GPaste show-history '<Super>v'
     echo "Applied GPaste settings — Super+V opens searchable history."
 else
     echo "NOTE: org.gnome.GPaste schema not present yet."
