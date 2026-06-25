@@ -42,6 +42,13 @@ clash with tmux's `C-a` prefix:
 | `CTRL+SHIFT+P` | Command palette |
 | `CTRL` `+` / `-` / `0` | Font size up / down / reset |
 
+## Clipboard history
+
+A system-wide clipboard manager (clipse) with searchable history, working
+across WezTerm, tmux, nvim **and** GUI apps (browser) — `Super+V` anywhere,
+`prefix + y` in tmux. Set up via [`clipboard/install.sh`](clipboard/); details
+in [`clipboard/README.md`](clipboard/README.md).
+
 ## Install
 
 ### TL;DR — two commands
