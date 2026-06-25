@@ -71,22 +71,40 @@ fi
 # earlier clipse popup.
 if command -v gsettings >/dev/null; then
     base="org.gnome.settings-daemon.plugins.media-keys"
-    slot="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/gpaste/"
+    root="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings"
+    en_slot="$root/gpaste/"
+    ru_slot="$root/gpaste-ru/"
+
+    # Ensure both slots are registered, preserving any other custom shortcuts.
     existing="$(gsettings get $base custom-keybindings 2>/dev/null || echo '@as []')"
-    if [[ "$existing" != *"$slot"* ]]; then
-        if [[ "$existing" == "@as []" || "$existing" == "[]" ]]; then
-            gsettings set $base custom-keybindings "['$slot']"
-        else
-            gsettings set $base custom-keybindings "${existing%]}, '$slot']"
+    for slot in "$en_slot" "$ru_slot"; do
+        if [[ "$existing" != *"$slot"* ]]; then
+            if [[ "$existing" == "@as []" || "$existing" == "[]" ]]; then
+                existing="['$slot']"
+            else
+                existing="${existing%]}, '$slot']"
+            fi
         fi
-    fi
-    kb="$base.custom-keybinding:$slot"
+    done
+    gsettings set $base custom-keybindings "$existing"
+
+    # EN layout: physical V key.
+    kb="$base.custom-keybinding:$en_slot"
     gsettings set "$kb" name 'GPaste clipboard history'
     gsettings set "$kb" command 'gpaste-client show-history'
     gsettings set "$kb" binding '<Super>v'
+
+    # RU layout (ЙЦУКЕН): the same physical key emits Cyrillic_em (м), so Super+V
+    # arrives as Super+Cyrillic_em — bind that too so the shortcut is
+    # layout-independent. Mirrors the RU aliases in anticrab.tmux / .nvim.
+    kb="$base.custom-keybinding:$ru_slot"
+    gsettings set "$kb" name 'GPaste clipboard history (RU)'
+    gsettings set "$kb" command 'gpaste-client show-history'
+    gsettings set "$kb" binding '<Super>Cyrillic_em'
+
     # Reset GPaste's own (unreliable) accelerator so it doesn't fight Super+V.
     gsettings reset org.gnome.GPaste show-history 2>/dev/null || true
-    echo "Bound Super+V -> gpaste-client show-history."
+    echo "Bound Super+V (and Super+м on RU layout) -> gpaste-client show-history."
 fi
 
 cat <<'EOF'
