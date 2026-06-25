@@ -44,10 +44,12 @@ clash with tmux's `C-a` prefix:
 
 ## Clipboard history
 
-A system-wide clipboard manager (clipse) with searchable history, working
-across WezTerm, tmux, nvim **and** GUI apps (browser) — `Super+V` anywhere,
-`prefix + y` in tmux. Set up via [`clipboard/install.sh`](clipboard/); details
-in [`clipboard/README.md`](clipboard/README.md).
+A system-wide clipboard manager (GPaste) with searchable history, working
+across WezTerm, tmux, nvim **and** GUI apps (browser) — `Super+V` anywhere.
+GPaste is used because GNOME/Mutter doesn't support the wlroots data-control
+protocol that terminal managers (clipse/cliphist) need. Set up via
+[`clipboard/install.sh`](clipboard/); details in
+[`clipboard/README.md`](clipboard/README.md).
 
 ## Install
 

@@ -1,50 +1,25 @@
-# Clipboard history (clipse)
+# Clipboard history (GPaste)
 
-System-wide clipboard manager with searchable history, working uniformly across
-WezTerm, tmux, nvim **and** GUI apps (browser, etc.) on GNOME Wayland.
+System-wide clipboard manager with searchable history, working across every app
+— terminal (WezTerm/tmux/nvim), browser, GUI — on GNOME Wayland.
 
-## Why this exists
+## Why GPaste (and not clipse / cliphist)
 
-Two problems it solves:
+Terminal clipboard managers like clipse and cliphist record history through
+`wl-paste --watch`, which relies on the **wlroots data-control protocol**.
+GNOME's **Mutter compositor does not implement it**, so their listeners fail
+with *"Watch mode requires a compositor that supports the wlroots data-control
+protocol"* and never capture anything on GNOME.
 
-1. **"Several clipboards" confusion.** On Wayland there are separate selections
-   (PRIMARY = mouse-select, CLIPBOARD = explicit copy), and if `wl-clipboard`
-   isn't installed the stack falls back to `xclip` (X11) — so half the tools
-   write to the X11 clipboard and half to Wayland, kept loosely in sync by
-   GNOME. Installing `wl-clipboard` puts everything on **one** Wayland CLIPBOARD.
-2. **Only the last copy is available.** clipse records history so you can search
-   and re-paste anything recent, not just the latest entry.
-
-## How it works
-
-- A listener daemon (`clipse --listen`, autostarted) watches the CLIPBOARD and
-  records every copy from any app into `~/.config/clipse/clipboard_history.json`.
-- A TUI picker shows the history. The daemon captures everything globally; the
-  picker is just how you summon and choose.
+GPaste is the native GNOME clipboard manager: it hooks GNOME's own clipboard
+APIs, so it works reliably on Mutter — event-driven, no polling.
 
 ## Usage
 
-| Where | How to open |
-|---|---|
-| Anywhere (browser, GUI, …) | `Super+V` (floating WezTerm popup) |
-| Inside tmux | `prefix + y` (centred tmux popup) |
-| Any terminal | run `clipse` |
-
-Inside the picker:
-
-| Action | Key |
-|---|---|
-| Up / down | `k` / `j` |
-| Search | `/` |
-| Choose (copy + close) | `Enter` |
-| Delete entry | `Backspace` |
-| Pin / unpin | `p` |
-| Preview | `Space` |
-| Quit | `Esc` / `q` |
-
-**Paste flow:** `Super+V → j/k or /search → Enter → Ctrl+V`. clipse copies the
-chosen entry and closes; the actual paste is a normal `Ctrl+V` (GNOME Wayland
-blocks synthetic keystrokes, so no manager can auto-paste reliably).
+- **`Super+V`** anywhere → history menu; **start typing to search**.
+- Select an entry → it's copied to the clipboard → paste with `Ctrl+V`.
+  (GNOME Wayland blocks synthetic keystrokes, so the final paste is manual.)
+- Top-bar GPaste icon gives the same menu plus settings.
 
 ## Install
 
@@ -52,15 +27,28 @@ blocks synthetic keystrokes, so no manager can auto-paste reliably).
 ~/projects/anticrab.wezterm/clipboard/install.sh
 ```
 
-Idempotent. Installs `wl-clipboard` (apt, asks for sudo), the pinned `clipse`
-binary into `~/.local/bin`, the config + Catppuccin Mocha theme into
-`~/.config/clipse`, an autostart entry for the listener, and the `Super+V`
-GNOME shortcut (freeing it from `toggle-message-tray`, which keeps `Super+M`).
+Idempotent. Installs `gpaste-2` + `gnome-shell-extension-gpaste` (apt, asks for
+sudo), applies settings (250-entry history, images on), binds `Super+V` to the
+searchable history (freeing it from `toggle-message-tray`, which keeps
+`Super+M`), and enables the Shell extension.
+
+**Then log out and back in** — Wayland can't reload GNOME Shell live, so the
+daemon + extension only start on a fresh session.
+
+## Settings & portability
+
+Key settings live in `org.gnome.GPaste` (gsettings/dconf). The installer sets
+the important ones explicitly. To carry your own tweaks to a new machine:
+
+```bash
+dconf dump /org/gnome/GPaste/ > clipboard/gpaste-settings.dconf   # snapshot
+dconf load /org/gnome/GPaste/ < clipboard/gpaste-settings.dconf   # restore
+```
 
 ## Notes
 
-- Copies from password managers (1Password, Bitwarden, KeePassXC, LastPass,
-  Dashlane, …) are excluded from history — see `excludedApps` in `config.json`.
-- History size is capped at `maxHistory` (250) entries.
-- `autoPaste` is intentionally disabled (the `Enter → Ctrl+V` flow). Flip it in
-  `config.json` only if you also set up `ydotool` for synthetic paste.
+- One Wayland CLIPBOARD across the whole stack — install `wl-clipboard` too
+  (`sudo apt install wl-clipboard`) so tmux/nvim share it cleanly. tmux's config
+  already prefers `wl-copy`; nvim's `unnamedplus` auto-detects `wl-paste`.
+- GPaste excludes nothing by default; use its preferences to add password
+  managers to the exclusion list if desired.
