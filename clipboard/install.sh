@@ -47,11 +47,7 @@ if has_gpaste_schema; then
     gsettings set org.gnome.GPaste track-changes true
     gsettings set org.gnome.GPaste save-history true
     gsettings set org.gnome.GPaste images-support true
-    # Super+V opens the searchable history (GNOME Shell menu, type to filter).
-    # show-history is a single-string accelerator (type 's'), NOT an array —
-    # passing "['<Super>v']" stores a literal invalid accel that won't bind.
-    gsettings set org.gnome.GPaste show-history '<Super>v'
-    echo "Applied GPaste settings — Super+V opens searchable history."
+    echo "Applied GPaste settings."
 else
     echo "NOTE: org.gnome.GPaste schema not present yet."
     echo "      Log in again (or finish the apt install) and re-run this script"
@@ -65,6 +61,32 @@ if command -v gnome-extensions >/dev/null; then
     else
         echo "Enable the extension after relogin: gnome-extensions enable $EXT_UUID"
     fi
+fi
+
+# ── 5. Bind Super+V to the history menu ───────────────────────────────────────
+# A CUSTOM media-keys shortcut running `gpaste-client show-history` (which tells
+# the active extension to open its searchable menu) is far more reliable than
+# GPaste's own `show-history` accelerator, which the daemon often fails to grab
+# under GNOME Wayland. This is the same mechanism that reliably launched the
+# earlier clipse popup.
+if command -v gsettings >/dev/null; then
+    base="org.gnome.settings-daemon.plugins.media-keys"
+    slot="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/gpaste/"
+    existing="$(gsettings get $base custom-keybindings 2>/dev/null || echo '@as []')"
+    if [[ "$existing" != *"$slot"* ]]; then
+        if [[ "$existing" == "@as []" || "$existing" == "[]" ]]; then
+            gsettings set $base custom-keybindings "['$slot']"
+        else
+            gsettings set $base custom-keybindings "${existing%]}, '$slot']"
+        fi
+    fi
+    kb="$base.custom-keybinding:$slot"
+    gsettings set "$kb" name 'GPaste clipboard history'
+    gsettings set "$kb" command 'gpaste-client show-history'
+    gsettings set "$kb" binding '<Super>v'
+    # Reset GPaste's own (unreliable) accelerator so it doesn't fight Super+V.
+    gsettings reset org.gnome.GPaste show-history 2>/dev/null || true
+    echo "Bound Super+V -> gpaste-client show-history."
 fi
 
 cat <<'EOF'
