@@ -89,6 +89,40 @@ else
     echo "      (needed for undercurl / true colour inside tmux+nvim)."
 fi
 
+# Desktop integration: install the .desktop launcher + app icon so WezTerm shows
+# up (with its logo, not a generic gear) in the GNOME app grid / dock. These live
+# under ~/.local/share, which is easy to wipe by accident — bundling them here
+# means one `install.sh` restores the icon. The launcher's Exec is pinned to the
+# resolved wezterm binary so it works even if ~/.local/bin isn't on the session
+# PATH. Non-fatal throughout.
+DESKTOP_SRC="$REPO_DIR/desktop"
+if [[ -d "$DESKTOP_SRC" ]]; then
+    apps_dir="$HOME/.local/share/applications"
+    icons_dir="$HOME/.local/share/icons/hicolor"
+    mkdir -p "$apps_dir" "$icons_dir/128x128/apps" "$icons_dir/scalable/apps"
+
+    # Resolve the wezterm binary for an absolute Exec/TryExec (fall back to the
+    # bare name so the launcher is still valid if wezterm isn't installed yet).
+    wez_bin="$(command -v wezterm || true)"
+    [[ -n "$wez_bin" ]] || wez_bin="wezterm"
+    desktop_out="$apps_dir/org.wezfurlong.wezterm.desktop"
+    sed -e "s|^TryExec=.*|TryExec=$wez_bin|" \
+        -e "s|^Exec=.*|Exec=$wez_bin start --cwd .|" \
+        "$DESKTOP_SRC/wezterm.desktop" > "$desktop_out"
+    chmod +x "$desktop_out"
+
+    cp "$DESKTOP_SRC/org.wezfurlong.wezterm.png" "$icons_dir/128x128/apps/"
+    cp "$DESKTOP_SRC/org.wezfurlong.wezterm.svg" "$icons_dir/scalable/apps/"
+
+    # Refresh the icon/desktop caches so the change shows without a relogin
+    # (both are best-effort — GNOME picks the files up on next login regardless).
+    command -v gtk-update-icon-cache >/dev/null && \
+        gtk-update-icon-cache -f -t "$icons_dir" >/dev/null 2>&1 || true
+    command -v update-desktop-database >/dev/null && \
+        update-desktop-database "$apps_dir" >/dev/null 2>&1 || true
+    echo "Installed desktop launcher + icon (org.wezfurlong.wezterm)."
+fi
+
 # WezTerm presence hint (non-fatal).
 if ! command -v wezterm >/dev/null; then
     echo "Hint: WezTerm not found on PATH — install it from"

@@ -70,6 +70,13 @@ bundled `wezterm.terminfo` into `~/.terminfo` (via `tic -x`, needed for
 (edits go live); without flags it copies. An existing `wezterm.lua` is backed up
 (timestamped) first. Idempotent — safe to re-run.
 
+It also installs the **desktop launcher + app icon** from [`desktop/`](desktop/)
+into `~/.local/share` (`org.wezfurlong.wezterm.{desktop,png,svg}`), so WezTerm
+shows up with its real logo in the GNOME app grid / dock instead of a generic
+icon. The launcher's `Exec` is pinned to the resolved `wezterm` binary. (These
+files are bundled here precisely because `~/.local/share` is easy to wipe by
+accident — one re-run restores the icon.)
+
 > WezTerm watches its config and reloads on save, so changes apply to open
 > windows immediately — no restart needed.
 
