@@ -51,6 +51,17 @@ protocol that terminal managers (clipse/cliphist) need. Set up via
 [`clipboard/install.sh`](clipboard/); details in
 [`clipboard/README.md`](clipboard/README.md).
 
+## Dock icons
+
+Some apps show a generic placeholder in the GNOME dock even though their icon is
+installed — GNOME matches a window to a `.desktop` entry by its Wayland `app_id`,
+and Qt apps that don't set one advertise their *binary* name instead
+(`io.plotjuggler.PlotJuggler.desktop` vs `app_id=plotjuggler`). Others ship no
+host entry at all because they run from a container or a build dir.
+[`dock-icons/install.sh`](dock-icons/) fixes the local offenders and
+[`dock-icons/scan.py`](dock-icons/scan.py) finds new ones; details in
+[`dock-icons/README.md`](dock-icons/README.md).
+
 ## Install
 
 ### TL;DR — two commands

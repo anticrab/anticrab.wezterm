@@ -1,0 +1,15 @@
+# Entry for the local Unity sim build (WM_CLASS=Unity_Simulation), which ships
+# no .desktop of its own and sets an empty _NET_WM_ICON — so without this file
+# GNOME has no icon to draw for it at all. install.sh fills in the build path
+# and working directory below, and skips the entry on machines without a build.
+# Unlike rviz2.desktop this is a real launcher, so it stays in the app grid.
+[Desktop Entry]
+Type=Application
+Name=Unity Simulation
+Comment=Unity simulation build (unity-sim)
+Exec=@BUILD@
+Path=@BUILDDIR@
+Icon=unity-simulation
+Terminal=false
+StartupWMClass=Unity_Simulation
+Categories=Development;

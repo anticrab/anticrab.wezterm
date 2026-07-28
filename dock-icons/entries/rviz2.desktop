@@ -1,0 +1,15 @@
+# Icon-only entry: rviz2 runs inside the ROS Docker container and ships no
+# host-side .desktop, so GNOME can't match its window (WM_CLASS=rviz2) to any
+# app. NoDisplay keeps it out of the app grid — it exists purely so the dock
+# has a name + icon for the running window. Exec is required by the spec but
+# never used; launching happens through the container's own ros2 launch.
+[Desktop Entry]
+Type=Application
+Name=RViz2
+Comment=ROS 2 3D visualization tool (runs in Docker)
+Exec=/usr/bin/false
+Icon=rviz2
+Terminal=false
+NoDisplay=true
+StartupWMClass=rviz2
+Categories=Development;

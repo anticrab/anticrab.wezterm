@@ -6,3 +6,7 @@
 # Local backups made by install.sh
 *.bak
 *.bak.*
+
+# Python bytecode (dock-icons/scan.py)
+__pycache__/
+*.pyc
