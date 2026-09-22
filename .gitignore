@@ -13,3 +13,6 @@
 # Python bytecode (dock-icons/scan.py)
 __pycache__/
 *.pyc
+
+# Local Claude Code workspace — specs, plans, settings. Never committed.
+.claude/
