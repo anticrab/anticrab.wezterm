@@ -11,8 +11,13 @@ Tested on Ubuntu 24.04 + GNOME Wayland.
 
 - **Starts in tmux** — `default_prog` runs `tmux new -A -s main`, so opening a
   window attaches straight to the `main` session (created on first launch).
-- **Font** — JetBrainsMono Nerd Font, 12pt. Ligatures **off** (`==`, `!=`, `->`
-  render as literal glyphs).
+- **Font** — JetBrainsMono Nerd Font, 11pt, `line_height = 0.95`. Ligatures
+  **off** (`==`, `!=`, `->` render as literal glyphs). The line height is worth
+  a word: the font's own line box is 1.32 em (ascender 1020, descender −300,
+  gap 0 per 1000 units) while an IDE lays the same font out at roughly 1.2 em,
+  so a terminal spends about 10% more height per line for identical text. The
+  glyphs themselves are exactly as wide — it's the same font at the same size.
+  0.95 takes most of that back without the lines touching.
 - **Theme** — JetBrains "Dark", the CLion New UI scheme: `#1e1f22` background,
   `#bcbec4` text, `#214283` selection, taken from JetBrains' own scheme files.
   tmux and zvim (`jb.nvim`) carry the same palette, so the three layers read as
@@ -34,7 +39,8 @@ Tested on Ubuntu 24.04 + GNOME Wayland.
   boundaries as tmux); triple-click takes the line. What lands on the clipboard
   is cleaned first — see below.
 - **Polish** — WebGpu renderer, `max_fps = 120`, audible bell off, steady block
-  cursor, light background opacity (0.92), rounded padding.
+  cursor, light background opacity (0.92), minimal window padding (every pixel
+  of margin is a column or a row not shown, and tmux draws its own separators).
 - System title bar kept (`TITLE | RESIZE`); close confirmation disabled.
 
 ## Selecting and copying

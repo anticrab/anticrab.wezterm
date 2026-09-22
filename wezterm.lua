@@ -14,7 +14,13 @@ config.term = "wezterm"
 
 -- Font
 config.font = wezterm.font("JetBrainsMono Nerd Font")
-config.font_size = 12.0
+config.font_size = 11.0
+-- The font's own line box is 1.32 em (ascender 1020, descender -300, gap 0 per
+-- 1000 units). An IDE lays the same font out at roughly 1.2 em, so a terminal
+-- spends about 10% more height per line for identical text — the glyphs
+-- themselves are exactly as wide, being the same font at the same size. 0.95
+-- takes most of that back without the lines touching.
+config.line_height = 0.95
 -- Disable ligatures (calt/clig/liga) so ==, !=, -> render as literal glyphs.
 config.harfbuzz_features = { "calt=0", "clig=0", "liga=0" }
 
@@ -56,7 +62,9 @@ config.window_decorations = "TITLE | RESIZE"
 -- Лёгкая прозрачность фона
 config.window_background_opacity = 0.92
 
-config.window_padding = { left = 8, right = 8, top = 6, bottom = 6 }
+-- Small, because every pixel here is a column or a row not shown. tmux draws
+-- its own separators, so the window doesn't need a margin to look tidy.
+config.window_padding = { left = 4, right = 4, top = 2, bottom = 2 }
 
 -- No wezterm tab bar — tmux already provides tabs/panes/status.
 config.enable_tab_bar = false
