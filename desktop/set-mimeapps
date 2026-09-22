@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Repoint file associations in a mimeapps.list at a different .desktop entry.
+
+    set-mimeapps --file ~/.config/mimeapps.list \
+                 --to nvim-wezterm.desktop --from nvim.desktop --from vim.desktop
+    set-mimeapps --file ~/.config/mimeapps.list --set text/plain=nvim-wezterm.desktop
+
+Only values inside [Default Applications] are touched, and only when they name
+one of the --from handlers. Everything else — other sections, other handlers,
+comments, blank lines, key order — is written back unchanged, because the file
+belongs to the user and holds associations this repo knows nothing about.
+
+Values may be a `;`-separated list; a stale handler inside one is replaced in
+place and duplicates are collapsed, so running this twice changes nothing.
+
+--set assigns one type outright, for a handler that should lose *this* type but
+keep its own (draw.io owning text/plain, say, while still owning .drawio files).
+"""
+
+import argparse
+import pathlib
+import sys
+
+SECTION = "[Default Applications]"
+
+
+def rewrite_value(value, new, stale):
+    """Replace stale handlers in one `a.desktop;b.desktop;` value."""
+    items = value.split(";")
+    trailing = items and items[-1] == ""
+    if trailing:
+        items = items[:-1]
+
+    seen, out = set(), []
+    for item in items:
+        handler = new if item.strip() in stale else item
+        if handler in seen:
+            continue
+        seen.add(handler)
+        out.append(handler)
+
+    result = ";".join(out)
+    if trailing:
+        result += ";"
+    return result
+
+
+def section_bounds(lines):
+    """Index range of [Default Applications]'s body, or None if absent."""
+    start = None
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if not (stripped.startswith("[") and stripped.endswith("]")):
+            continue
+        if stripped == SECTION:
+            start = index + 1
+        elif start is not None:
+            return start, index
+    return (start, len(lines)) if start is not None else None
+
+
+def rewrite(text, new, stale):
+    if not stale:
+        return text
+    lines = text.split("\n")
+    bounds = section_bounds(lines)
+    if bounds is None:
+        return text
+    for index in range(*bounds):
+        line = lines[index]
+        if "=" not in line or line.strip().startswith("#"):
+            continue
+        key, _, value = line.partition("=")
+        lines[index] = key + "=" + rewrite_value(value, new, stale)
+    return "\n".join(lines)
+
+
+def assign(text, assignments):
+    """Set `mime=handler` outright, adding the key (or the section) if needed."""
+    if not assignments:
+        return text
+    lines = text.split("\n")
+    for mime, handler in assignments:
+        bounds = section_bounds(lines)
+        if bounds is None:
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines += [SECTION, f"{mime}={handler}", ""]
+            continue
+
+        start, end = bounds
+        for index in range(start, end):
+            key, sep, _ = lines[index].partition("=")
+            if sep and key.strip() == mime:
+                lines[index] = f"{mime}={handler}"
+                break
+        else:
+            # Land after the section's last entry, before any trailing blanks.
+            insert_at = end
+            while insert_at > start and lines[insert_at - 1].strip() == "":
+                insert_at -= 1
+            lines.insert(insert_at, f"{mime}={handler}")
+    return "\n".join(lines)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--file", required=True, type=pathlib.Path)
+    parser.add_argument("--to", default="", help="the .desktop id to point at")
+    parser.add_argument("--from", dest="stale", action="append", default=[],
+                        help="a .desktop id to replace (repeatable)")
+    parser.add_argument("--set", dest="assign", action="append", default=[],
+                        metavar="MIME=HANDLER",
+                        help="set one type's handler outright (repeatable)")
+    args = parser.parse_args()
+
+    assignments = []
+    for item in args.assign:
+        mime, sep, handler = item.partition("=")
+        if not sep:
+            parser.error(f"--set needs MIME=HANDLER, got {item!r}")
+        assignments.append((mime.strip(), handler.strip()))
+
+    # Nothing to repoint if the user has no associations file yet.
+    if not args.file.exists():
+        return 0
+
+    original = args.file.read_text()
+    updated = assign(rewrite(original, args.to, set(args.stale)), assignments)
+    if updated != original:
+        args.file.write_text(updated)
+        print(f"Updated {args.file}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

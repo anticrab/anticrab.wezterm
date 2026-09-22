@@ -1,0 +1,39 @@
+#!/bin/sh
+# Open files in zvim (nvim) inside a WezTerm window.
+#
+# This is what nvim-wezterm.desktop runs. It exists for one reason: GNOME hands
+# an "open with" a list of absolute paths and no working directory, so a plain
+# `nvim %F` would start with the cwd wherever the session happens to be —
+# usually `/`. Telescope, live_grep and auto-session all key off the working
+# directory, so we point WezTerm at the file's own directory instead.
+#
+# Also note `Terminal=false` in the .desktop entry: WezTerm *is* the terminal.
+# With `Terminal=true` glib would wrap the command in a terminal of its own
+# choosing, and it picks from a hardcoded list that starts with gnome-terminal —
+# it never consults update-alternatives' x-terminal-emulator.
+
+set -eu
+
+# Fall back to the usual install locations when the launcher's environment has a
+# bare PATH (GNOME doesn't source a login shell). Appended, not prepended, so an
+# explicit PATH entry still wins.
+PATH="$PATH:$HOME/.local/bin:/snap/bin:/usr/local/bin"
+export PATH
+
+# The directory to start in: the first argument if it's a directory, otherwise
+# the directory holding it. A path whose directory doesn't exist leaves the
+# working directory alone rather than guessing.
+dir=""
+if [ "$#" -gt 0 ]; then
+    if [ -d "$1" ]; then
+        dir=$(cd "$1" && pwd)
+    elif [ -d "$(dirname "$1")" ]; then
+        dir=$(cd "$(dirname "$1")" && pwd)
+    fi
+fi
+
+if [ -n "$dir" ]; then
+    exec wezterm start --cwd "$dir" -- nvim "$@"
+fi
+
+exec wezterm start -- nvim "$@"

@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+Name=zvim
+GenericName=Text Editor
+Comment=Edit files in Neovim inside WezTerm
+Keywords=nvim;neovim;vim;zvim;text;editor;
+Icon=zvim
+TryExec=zvim-open
+Exec=zvim-open %F
+# WezTerm *is* the terminal, so this entry must not ask for one. With
+# Terminal=true glib wraps the command in a terminal of its own choosing from a
+# hardcoded list that starts with gnome-terminal — it never looks at
+# update-alternatives' x-terminal-emulator.
+Terminal=false
+StartupNotify=false
+StartupWMClass=org.wezfurlong.wezterm
+Categories=Utility;TextEditor;
+MimeType=text/plain;text/english;text/markdown;text/csv;text/css;text/xml;text/yaml;text/javascript;text/x-c;text/x-c++;text/x-csrc;text/x-chdr;text/x-c++src;text/x-c++hdr;text/x-python;text/x-lua;text/x-java;text/x-pascal;text/x-tcl;text/x-tex;text/x-makefile;text/x-cmake;text/x-shellscript;text/x-log;text/x-diff;text/x-patch;application/x-shellscript;application/json;application/yaml;application/x-yaml;application/toml;application/xml;application/javascript;

@@ -83,6 +83,34 @@ protocol that terminal managers (clipse/cliphist) need. Set up via
 [`clipboard/install.sh`](clipboard/); details in
 [`clipboard/README.md`](clipboard/README.md).
 
+## Opening files in zvim
+
+Picking "Open with → zvim" in Files opens the file in Neovim **inside WezTerm**,
+in the file's own directory.
+
+Getting there needs one non-obvious thing: the entry says `Terminal=false`.
+Neovim's own entry says `Terminal=true`, which hands the launch to glib — and
+glib picks the terminal from a hardcoded list headed by `gnome-terminal`. It
+never consults `update-alternatives`' `x-terminal-emulator`, so pointing that at
+WezTerm changes nothing. Files then open in GNOME Terminal, where no Nerd Font
+is installed and zvim's icons and tab separators come out as garbage.
+
+[`desktop/nvim-wezterm.desktop`](desktop/) declares `Terminal=false` and runs
+[`desktop/zvim-open`](desktop/zvim-open), which starts WezTerm with `--cwd` set
+to the file's directory — GNOME passes absolute paths but no working directory,
+and telescope, live_grep and auto-session in
+[anticrab.nvim](https://github.com/anticrab/anticrab.nvim) all key off it.
+
+`install.sh` also repoints the file associations, since `~/.config/mimeapps.list`
+may name handlers that don't exist (that's the usual cause of files falling
+through to the system `vim.desktop`). [`desktop/set-mimeapps`](desktop/set-mimeapps)
+rewrites only the entries it's told about and leaves the rest of the file byte
+for byte alone.
+
+```bash
+python3 -m unittest discover -s tests   # tests for both scripts
+```
+
 ## Dock icons
 
 Some apps show a generic placeholder in the GNOME dock even though their icon is

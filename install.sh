@@ -128,13 +128,71 @@ if [[ -d "$DESKTOP_SRC" ]]; then
     cp "$DESKTOP_SRC/org.wezfurlong.wezterm.png" "$icons_dir/128x128/apps/"
     cp "$DESKTOP_SRC/org.wezfurlong.wezterm.svg" "$icons_dir/scalable/apps/"
 
+    # "Open with -> zvim": a launcher that opens files in nvim inside WezTerm.
+    #
+    # Needed because a `Terminal=true` entry (the one Neovim itself ships) is
+    # handed to glib, which wraps it in a terminal from a hardcoded list headed
+    # by gnome-terminal — update-alternatives' x-terminal-emulator is never
+    # consulted. Our entry says Terminal=false and launches WezTerm itself.
+    bin_dir="$HOME/.local/bin"
+    mkdir -p "$bin_dir"
+    install -m 755 "$DESKTOP_SRC/zvim-open" "$bin_dir/zvim-open"
+
+    # Give it Neovim's own icon where one is installed, so the entry isn't
+    # visually identical to the terminal. Falls back to WezTerm's logo.
+    zvim_icon="org.wezfurlong.wezterm"
+    for candidate in \
+        /snap/nvim/current/usr/share/icons/hicolor/128x128/apps/nvim.png \
+        /usr/share/icons/hicolor/128x128/apps/nvim.png \
+        /usr/share/pixmaps/nvim.png
+    do
+        if [[ -f "$candidate" ]]; then
+            cp "$candidate" "$icons_dir/128x128/apps/zvim.png"
+            zvim_icon="zvim"
+            break
+        fi
+    done
+
+    zvim_out="$apps_dir/nvim-wezterm.desktop"
+    sed -e "s|^TryExec=.*|TryExec=$bin_dir/zvim-open|" \
+        -e "s|^Exec=.*|Exec=$bin_dir/zvim-open %F|" \
+        -e "s|^Icon=.*|Icon=$zvim_icon|" \
+        "$DESKTOP_SRC/nvim-wezterm.desktop" > "$zvim_out"
+    chmod +x "$zvim_out"
+
+    # Point the file associations at it. The user's mimeapps.list already named
+    # nvim-wezterm.desktop and nvim.desktop, neither of which existed — which is
+    # why files fell through to the system vim.desktop and opened in
+    # gnome-terminal. text/plain is set outright because it pointed at draw.io,
+    # whose own associations must stay put.
+    mimeapps="$HOME/.config/mimeapps.list"
+    if [[ -f "$mimeapps" ]]; then
+        mime_backup="$mimeapps.bak.$(date +%Y%m%d-%H%M%S)"
+        cp "$mimeapps" "$mime_backup"
+        "$DESKTOP_SRC/set-mimeapps" --file "$mimeapps" \
+            --to nvim-wezterm.desktop \
+            --from nvim.desktop --from nvim_nvim.desktop --from vim.desktop \
+            --set text/plain=nvim-wezterm.desktop
+        # Only keep the backup if something actually changed.
+        if cmp -s "$mimeapps" "$mime_backup"; then
+            rm -f "$mime_backup"
+        else
+            echo "Backed up existing $mimeapps -> $mime_backup"
+        fi
+    fi
+
+    # Which terminal launches a `Terminal=true` entry. glib 2.80 ignores this
+    # file (it has the hardcoded list instead), but xdg-terminal-exec and newer
+    # glib read it, so setting it now means one less surprise later.
+    echo "org.wezfurlong.wezterm.desktop" > "$HOME/.config/xdg-terminals.list"
+
     # Refresh the icon/desktop caches so the change shows without a relogin
     # (both are best-effort — GNOME picks the files up on next login regardless).
     command -v gtk-update-icon-cache >/dev/null && \
         gtk-update-icon-cache -f -t "$icons_dir" >/dev/null 2>&1 || true
     command -v update-desktop-database >/dev/null && \
         update-desktop-database "$apps_dir" >/dev/null 2>&1 || true
-    echo "Installed desktop launcher + icon (org.wezfurlong.wezterm)."
+    echo "Installed desktop launchers + icons (org.wezfurlong.wezterm, nvim-wezterm)."
 fi
 
 # WezTerm presence hint (non-fatal).
