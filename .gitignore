@@ -7,6 +7,9 @@
 *.bak
 *.bak.*
 
+# Brainstorming companion mockups
+.superpowers/
+
 # Python bytecode (dock-icons/scan.py)
 __pycache__/
 *.pyc

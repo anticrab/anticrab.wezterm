@@ -56,20 +56,34 @@ backup_unless_already_correct() {
     return 0
 }
 
+# wezterm.lua plus the Lua modules it requires. selection.lua has to sit next to
+# it in ~/.config/wezterm, because that directory — not the repo — is what
+# wezterm puts on package.path when the config is a symlink.
+CONFIG_FILES=(wezterm.lua selection.lua)
+
+place_file() {
+    local name="$1" target="$TARGET_DIR/$1"
+    if [[ "$MODE" == "symlink" ]]; then
+        if backup_unless_already_correct "$target" "$REPO_DIR/$name"; then
+            ln -sfn "$REPO_DIR/$name" "$target"
+            echo "Linked: $target -> $REPO_DIR/$name"
+        else
+            echo "Skipped: $target already points to $REPO_DIR/$name"
+        fi
+    else
+        if backup_unless_already_correct "$target" ""; then
+            cp "$REPO_DIR/$name" "$target"
+            echo "Copied: $REPO_DIR/$name -> $target"
+        fi
+    fi
+}
+
 if [[ "$REPO_DIR" == "$TARGET_DIR" ]]; then
     echo "Repo is already at $TARGET_DIR — config in place, nothing to do."
-elif [[ "$MODE" == "symlink" ]]; then
-    if backup_unless_already_correct "$TARGET_CONF" "$REPO_DIR/wezterm.lua"; then
-        ln -sfn "$REPO_DIR/wezterm.lua" "$TARGET_CONF"
-        echo "Linked: $TARGET_CONF -> $REPO_DIR/wezterm.lua"
-    else
-        echo "Skipped: $TARGET_CONF already points to $REPO_DIR/wezterm.lua"
-    fi
 else
-    if backup_unless_already_correct "$TARGET_CONF" ""; then
-        cp "$REPO_DIR/wezterm.lua" "$TARGET_CONF"
-        echo "Copied: $REPO_DIR/wezterm.lua -> $TARGET_CONF"
-    fi
+    for name in "${CONFIG_FILES[@]}"; do
+        place_file "$name"
+    done
 fi
 
 # Install the `wezterm` terminfo into ~/.terminfo so `config.term = "wezterm"`
