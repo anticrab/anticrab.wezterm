@@ -4,8 +4,9 @@ local config = wezterm.config_builder()
 
 -- Launch straight into tmux: attach to session "main" (create it if missing).
 -- tmux is the primary driver here, so a wezterm window === the main session.
--- `-l` makes bash a login shell so ~/.bash_profile is sourced first.
-config.default_prog = { "bash", "-l", "-c", "tmux new -A -s main" }
+-- The shell is zsh, configured by anticrab.zsh. `-l` makes it a login shell, so
+-- ~/.zshenv and the zprofile files are read before tmux starts.
+config.default_prog = { "zsh", "-l", "-c", "tmux new -A -s main" }
 
 -- Advertise the `wezterm` terminfo (installed by install.sh into ~/.terminfo).
 -- Gives apps inside — tmux, nvim — styled underlines (undercurl) and proper

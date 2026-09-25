@@ -9,8 +9,10 @@ Tested on Ubuntu 24.04 + GNOME Wayland.
 
 ## What's configured
 
-- **Starts in tmux** — `default_prog` runs `tmux new -A -s main`, so opening a
-  window attaches straight to the `main` session (created on first launch).
+- **Starts in tmux** — `default_prog` runs `zsh -l -c 'tmux new -A -s main'`, so
+  opening a window attaches straight to the `main` session (created on first
+  launch). The shell is zsh, configured by
+  [anticrab.zsh](https://github.com/anticrab/anticrab.zsh).
 - **Font** — JetBrainsMono Nerd Font, 11pt, `line_height = 0.95`. Ligatures
   **off** (`==`, `!=`, `->` render as literal glyphs). The line height is worth
   a word: the font's own line box is 1.32 em (ascender 1020, descender −300,
